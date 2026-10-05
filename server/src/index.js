@@ -22,9 +22,33 @@ const adminAuth = getAdminAuthService();
 const app = express();
 const distDir = path.resolve(env.rootDir, "dist");
 
+// The browser talks to Supabase directly for the Google sign-in dance: it
+// builds the authorization URL, and supabase-js exchanges the callback's
+// ?code= for a session over fetch. helmet's default policy has no connect-src
+// at all, so it falls back to default-src 'self' and every one of those
+// requests is refused -- surfacing as a bare "Failed to fetch" on the
+// /oauth/callback page with no other clue. Only the production server was
+// affected: the Vite dev server serves the client with no CSP at all.
+const supabaseOrigin = (() => {
+  try {
+    return env.supabaseUrl ? new URL(env.supabaseUrl).origin : null;
+  } catch {
+    // An unset or malformed SUPABASE_URL simply leaves connect-src as-is, so
+    // the app still runs (minus Google sign-in) instead of failing to boot.
+    return null;
+  }
+})();
+
 if (env.trustProxy) app.set("trust proxy", 1);
 app.disable("x-powered-by");
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    // Everything else stays on helmet's defaults; only connect-src is widened.
+    directives: {
+      connectSrc: ["'self'", ...(supabaseOrigin ? [supabaseOrigin] : [])]
+    }
+  }
+}));
 app.use(compression());
 app.use(cors({ 
   origin: env.clientOrigin, 
