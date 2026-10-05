@@ -2940,9 +2940,16 @@ function OAuthCallbackPage() {
           refreshToken: session.refresh_token,
           expiresIn: session.expires_in
         });
-        // The server now owns the session via httpOnly cookies; this
-        // in-memory client copy has done its job and is discarded.
-        await supabaseBrowser().auth.signOut({ scope: "local" }).catch(() => {});
+        // Deliberately NOT calling supabaseBrowser().auth.signOut() here.
+        // signOut() is a server-side revocation, not a "forget the local copy"
+        // call: it revokes both the access AND the refresh token we just handed
+        // to the server, so the httpOnly cookies set by /auth/oauth/session stop
+        // verifying. The workspace's first request then 401s, which App.jsx
+        // treats as an expired session and answers with logout() -- so Google
+        // sign-in lasted about a second. The in-memory Supabase session is
+        // harmless to leave: the browser client is built with
+        // persistSession: false, so nothing is written to storage and the copy
+        // disappears on the next full page load.
 
         if (!cancelled) navigate("/app", { replace: true });
       } catch (callbackError) {
