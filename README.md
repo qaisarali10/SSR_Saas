@@ -4,7 +4,7 @@ A **React + Express + Supabase** application for **Sales, Stock & Reporting (SSR
 
 ## Features
 
-- Company and distributor management from the Network screen
+- Company and distributor management from the Network screen 
 - Product and product alias management
 - Product scheme imports from Excel
 - SSR Excel upload processing with segregation calculations
