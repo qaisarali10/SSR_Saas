@@ -3006,13 +3006,8 @@ function OAuthCallbackPage() {
         // verifying. The workspace's first request then 401s, which App.jsx
         // treats as an expired session and answers with logout() -- so Google
         // sign-in lasted about a second. The in-memory Supabase session is
-<<<<<<< HEAD
-        // harmless to leave: the browser client keeps sessions in memory only
+// harmless to leave: the browser client keeps sessions in memory only
         // (see supabaseClient.js), so nothing is written to storage and the copy
-=======
-        // harmless to leave: the browser client is built with
-        // persistSession: false, so nothing is written to storage and the copy
->>>>>>> af9bfabd3e75cd7d56ffc4ad0934456cfab1f0c7
         // disappears on the next full page load.
 
         if (!cancelled) {
