@@ -57,11 +57,16 @@ try {
   const { data: distA } = await admin.from("distributors").insert({ user_id: userA.id, company_id: compA.id, did: 90001, dname: "ZZ Private Dist A" }).select().single();
   await admin.from("distributors").insert({ user_id: userB.id, company_id: compB.id, did: 90002, dname: "ZZ Private Dist B" });
 
+  // The 530 imported distributors all carry legacyId; the private rows seeded
+  // below do not. That is the reliable way to tell them apart over the API,
+  // because listDistributors() maps rows to a client shape with no userId field.
+  const SHARED = 530;
+
   console.log("1. shared catalogue is visible to every login");
   for (const [who, auth] of [["userA", authA], ["userB", authB], ["stranger", authS]]) {
     const d = await get(auth, "/api/distributors?limit=1000");
-    const shared = (d.body || []).filter((x) => !x.userId).length;
-    check(`${who} sees the 530 shared distributors`, d.status === 200 && shared === 530, `status ${d.status}, shared ${shared}`);
+    const imported = (d.body || []).filter((x) => x.legacyId !== null && x.legacyId !== undefined).length;
+    check(`${who} sees all ${SHARED} imported distributors`, d.status === 200 && imported === SHARED, `status ${d.status}, imported ${imported}`);
   }
 
   console.log("\n2. private rows stay private");
