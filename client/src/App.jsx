@@ -2914,6 +2914,41 @@ function ConfirmEmailPage() {
   );
 }
 
+const OAUTH_CALLBACK_PATH = "/oauth/callback";
+
+// Supabase reports a failed redirect through the URL (error / error_code /
+// error_description, on the query string for PKCE and in the fragment for
+// implicit). getSession() reports neither: it only ever answers "no session",
+// which is why a misconfigured redirect URL used to look like a broken button.
+//
+// Snapshotted once per page load. Supabase's own client strips the query string
+// and fragment while it parses the callback, and StrictMode runs this effect
+// twice, so reading window.location on every pass would report "nothing to see
+// here" on the pass that actually decides what the user is shown.
+let oauthCallbackParams;
+function readOAuthCallbackParams() {
+  if (oauthCallbackParams) return oauthCallbackParams;
+  const query = new URLSearchParams(window.location.search);
+  const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const pick = (name) => query.get(name) || fragment.get(name);
+
+  const code = pick("error_code") || pick("error");
+  const description = pick("error_description");
+  oauthCallbackParams = {
+    authCode: pick("code"),
+    error: code ? `${code.replace(/_/g, " ")}${description ? `: ${description}` : ""}` : ""
+  };
+  return oauthCallbackParams;
+}
+
+function clearOAuthCallbackParams() {
+  const url = new URL(window.location.href);
+  if (!url.search && !url.hash) return;
+  url.search = "";
+  url.hash = "";
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 /**
  * Where Google (via Supabase) redirects back to. supabaseBrowser() was
  * created with detectSessionInUrl: true, so by the time this mounts it has
@@ -2927,24 +2962,58 @@ function OAuthCallbackPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const { authCode, error: redirectError } = readOAuthCallbackParams();
 
     (async () => {
       try {
-        const { data, error: sessionError } = await supabaseBrowser().auth.getSession();
+        // A sign-in that never made it back can only be reported by the URL.
+        if (redirectError) throw new Error(redirectError);
+
+        // initialize() carries the real reason a callback could not be turned
+        // into a session (expired code, missing verifier, failed user lookup);
+        // getSession() swallows it, so await this first and keep its error.
+        const initResult = await supabaseBrowser().auth.initialize();
+        if (initResult?.error) throw new Error(initResult.error.message);
+
+        let { data, error: sessionError } = await supabaseBrowser().auth.getSession();
         if (sessionError) throw new Error(sessionError.message);
+
+        // Backstop for a ?code= callback whose exchange initialize() could not
+        // finish. The auth code is single-use, so this only ever runs when the
+        // client above found nothing to exchange it with.
+        if (!data?.session && authCode && !cancelled) {
+          const exchanged = await supabaseBrowser().auth.exchangeCodeForSession(authCode);
+          if (exchanged.error) throw new Error(exchanged.error.message);
+          ({ data } = exchanged);
+        }
+
         const session = data?.session;
-        if (!session) throw new Error("Google sign-in did not complete. Please try again.");
+        if (!session) {
+          throw new Error(
+            `Google sign-in did not complete. Check that ${window.location.origin}${OAUTH_CALLBACK_PATH} is an allowed redirect URL, then try again.`
+          );
+        }
 
         await adoptOAuthSession({
           accessToken: session.access_token,
           refreshToken: session.refresh_token,
           expiresIn: session.expires_in
         });
-        // The server now owns the session via httpOnly cookies; this
-        // in-memory client copy has done its job and is discarded.
-        await supabaseBrowser().auth.signOut({ scope: "local" }).catch(() => {});
+        // Deliberately NOT calling supabaseBrowser().auth.signOut() here.
+        // signOut() is a server-side revocation, not a "forget the local copy"
+        // call: it revokes both the access AND the refresh token we just handed
+        // to the server, so the httpOnly cookies set by /auth/oauth/session stop
+        // verifying. The workspace's first request then 401s, which App.jsx
+        // treats as an expired session and answers with logout() -- so Google
+        // sign-in lasted about a second. The in-memory Supabase session is
+        // harmless to leave: the browser client keeps sessions in memory only
+        // (see supabaseClient.js), so nothing is written to storage and the copy
+        // disappears on the next full page load.
 
-        if (!cancelled) navigate("/app", { replace: true });
+        if (!cancelled) {
+          clearOAuthCallbackParams();
+          navigate("/app", { replace: true });
+        }
       } catch (callbackError) {
         if (!cancelled) setError(callbackError.message);
       }

@@ -28,10 +28,58 @@ if (!MONGO_URI) {
 }
 
 const sendResetEmails = !process.argv.includes("--no-reset-email");
+const skipUsers = process.argv.includes("--skip-users");
 const db = supabaseAdmin();
 
 function oid(value) {
   return value ? String(value) : null;
+}
+
+/**
+ * The Mongo database holds two different shapes of the same documents:
+ *
+ *   legacy (Django-era, what is actually in the database today)
+ *     companies    { legacyId, name,  ... }
+ *     distributors { legacyId, name, distributorId, active, area, subarea, cell, company, ... }
+ *
+ *   Mongoose-era (what an older revision of the app wrote)
+ *     companies    { legacyId, cname, ... }
+ *     distributors { legacyId, dname, did, status, area, subarea, cell, company, ... }
+ *
+ * Reading only one shape silently loses data -- `name` vs `dname` in particular
+ * feeds a NOT NULL column, so the insert fails outright. These readers accept
+ * both, preferring the Mongoose name and falling back to the legacy one.
+ */
+function readName(doc, ...keys) {
+  for (const key of keys) {
+    const value = doc[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return String(value).trim();
+    }
+  }
+  return "";
+}
+
+// `did` is the display number shown in the UI, and `active` is the legacy
+// spelling of `status`. Both fall back so a mixed database still imports.
+function readDid(doc) {
+  const value = doc.did ?? doc.distributorId ?? doc.distributor_id;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 1;
+}
+
+function readStatus(doc) {
+  if (doc.status !== undefined && doc.status !== null) return doc.status !== false;
+  if (doc.active !== undefined && doc.active !== null) return doc.active !== false;
+  return true;
+}
+
+function readText(doc, ...keys) {
+  for (const key of keys) {
+    const value = doc[key];
+    if (value !== undefined && value !== null) return String(value);
+  }
+  return "";
 }
 
 async function migrateUsers(mongoDb) {
@@ -122,8 +170,12 @@ async function run() {
 
   try {
     console.log("Migrating users...");
-    const { idMap: userIds, created: usersCreated, skipped: usersSkipped } = await migrateUsers(mongoDb);
-    console.log(`  users: ${usersCreated} created, ${usersSkipped} already present`);
+    // --skip-users is for a database whose rows carry no `user` reference at
+    // all. Every row then migrates with user_id NULL, which ownership.js treats
+    // as shared/visible-to-everyone, so there is nothing to map and creating
+    // Supabase accounts (random password + reset email each) would be noise.
+    const userIds = skipUsers ? new Map() : (await migrateUsers(mongoDb)).idMap;
+    if (skipUsers) console.log("  skipped (--skip-users); rows will import as shared/unowned");
 
     const ownerId = (doc) => (doc.user ? userIds.get(oid(doc.user)) || null : null);
 
@@ -132,7 +184,13 @@ async function run() {
       collection: "companies",
       table: "companies",
       idMap: userIds,
-      mapRow: (doc) => ({ legacy_id: doc.legacyId ?? null, cname: doc.cname, user_id: ownerId(doc) })
+      mapRow: (doc) => ({
+        legacy_id: doc.legacyId ?? null,
+        cname: readName(doc, "cname", "name"),
+        created_at: doc.createdAt ?? undefined,
+        updated_at: doc.updatedAt ?? undefined,
+        user_id: ownerId(doc)
+      })
     });
     console.log(`  companies: ${companies.inserted} inserted, ${companies.skipped} already present`);
 
@@ -159,12 +217,14 @@ async function run() {
       mapRow: (doc) => ({
         legacy_id: doc.legacyId ?? null,
         company_id: doc.company ? companies.idMap.get(oid(doc.company)) || null : null,
-        did: doc.did ?? 1,
-        dname: doc.dname,
-        area: doc.area || "",
-        subarea: doc.subarea || "",
-        cell: doc.cell || "",
-        status: doc.status !== false,
+        did: readDid(doc),
+        dname: readName(doc, "dname", "name"),
+        area: readText(doc, "area"),
+        subarea: readText(doc, "subarea"),
+        cell: readText(doc, "cell"),
+        status: readStatus(doc),
+        created_at: doc.createdAt ?? undefined,
+        updated_at: doc.updatedAt ?? undefined,
         user_id: ownerId(doc)
       })
     });
@@ -247,19 +307,45 @@ async function run() {
       if (error) console.error(`upload_logs: ${error.message}`);
     }
 
+// audit_logs has no surrogate key in Mongo, so re-running would duplicate every
+    // entry. Match on the full tuple *including* created_at: keying on
+    // action/resource/resource_id alone would also swallow a genuinely distinct
+    // second login by the same user, which is a real event, not a re-import.
     const auditLogs = await mongoDb.collection("auditlogs").find({}).toArray();
+    let auditInserted = 0;
     if (auditLogs.length) {
-      const { error } = await db.from("audit_logs").insert(auditLogs.map((doc) => ({
-        user_id: doc.user ? (userIds.get(oid(doc.user)) || String(doc.user)) : "",
-        action: doc.action, resource: doc.resource, resource_id: doc.resourceId || "",
-        metadata: doc.metadata || {}, ip_address: doc.ipAddress || "", user_agent: doc.userAgent || "",
-        status: doc.status || "success", created_at: doc.createdAt
-      })));
-      if (error) console.error(`audit_logs: ${error.message}`);
-    }
-    console.log(`  upload_logs: ${uploadLogs.length}, audit_logs: ${auditLogs.length}`);
+      const key = (a, r, rid, at) => `${a}|${r}|${rid}|${at ? new Date(at).toISOString() : ""}`;
+      const already = new Set();
+      const pageSize = 200;
+      const { count: existingAudit } = await db.from("audit_logs").select("*", { count: "exact", head: true });
+      const totalExisting = existingAudit || 0;
+      for (let offset = 0; offset < totalExisting; offset += pageSize) {
+        const { data } = await db
+          .from("audit_logs")
+          .select("action, resource, resource_id, created_at")
+          .range(offset, offset + pageSize - 1);
+        for (const row of data || []) already.add(key(row.action, row.resource, row.resource_id, row.created_at));
+      }
 
+      const pending = auditLogs.filter((doc) => !already.has(key(doc.action, doc.resource, doc.resourceId || "", doc.createdAt)));
+      if (pending.length) {
+        const { error } = await db.from("audit_logs").insert(pending.map((doc) => ({
+          user_id: doc.user ? (userIds.get(oid(doc.user)) || String(doc.user)) : "",
+          action: doc.action, resource: doc.resource, resource_id: doc.resourceId || "",
+          metadata: doc.metadata || {}, ip_address: doc.ipAddress || "", user_agent: doc.userAgent || "",
+          status: doc.status || "success", created_at: doc.createdAt
+        })));
+        if (error) console.error(`audit_logs: ${error.message}`);
+        else auditInserted = pending.length;
+      }
+    }
+    console.log(`  upload_logs: ${uploadLogs.length}, audit_logs: ${auditInserted} inserted, ${auditLogs.length - auditInserted} already present`);
+
+    if (skipUsers) {
+    console.log("\nDone. --skip-users was used: no accounts were created and every imported row is shared (user_id NULL), visible to any signed-in user.");
+  } else {
     console.log("\nDone. Migrated users were created with a random password" + (sendResetEmails ? " and sent a reset-password email." : " -- run with reset emails enabled or use the admin panel to set new passwords."));
+  }
   } finally {
     await client.close();
   }

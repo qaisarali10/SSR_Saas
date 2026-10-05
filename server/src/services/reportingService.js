@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { supabaseAdmin } from "./supabaseClient.js";
-import { buildUserFilter, getUserId, isAdmin } from "../utils/ownership.js";
+import { getUserId, isAdmin, scope } from "../utils/ownership.js";
 
 const reportTypes = new Set(["monthly-sales", "distributor", "product", "company", "audit"]);
 const MONTH_RANK = new Map(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map((m, i) => [m, i]));
@@ -51,16 +51,14 @@ function dateRange(filters) {
 
 async function companyProductIds(db, user, companyId) {
   if (!companyId) return null;
-  const query = { ...buildUserFilter(user), company_id: companyId };
-  const { data, error } = await db.from("products").select("id").match(query);
+  const { data, error } = await scope(db.from("products").select("id"), user).eq("company_id", companyId);
   if (error) throw new Error(error.message);
   return data.map((row) => row.id);
 }
 
 async function companyDistributorIds(db, user, companyId) {
   if (!companyId) return null;
-  const query = { ...buildUserFilter(user), company_id: companyId };
-  const { data, error } = await db.from("distributors").select("id").match(query);
+  const { data, error } = await scope(db.from("distributors").select("id"), user).eq("company_id", companyId);
   if (error) throw new Error(error.message);
   return data.map((row) => row.id);
 }
@@ -231,8 +229,7 @@ export async function generateReport(user, filters = {}) {
   // memory: a sale counts once for a company reached through either side of
   // that pair, matching the old $or semantics.
   if (type === "company") {
-    const scope = buildUserFilter(user);
-    let companyQuery = db.from("companies").select("*").match(scope);
+    let companyQuery = scope(db.from("companies").select("*"), user);
     if (filters.companyId) companyQuery = companyQuery.eq("id", filters.companyId);
     const { data: companies, error: companiesError } = await companyQuery.order("cname").limit(limit);
     if (companiesError) throw new Error(companiesError.message);
@@ -244,8 +241,8 @@ export async function generateReport(user, filters = {}) {
     const companyIds = companies.map((company) => company.id);
     const { from, to } = dateRange(filters);
     const [{ data: products, error: productsError }, { data: distributors, error: distributorsError }, { data: grouped, error: groupedError }] = await Promise.all([
-      db.from("products").select("id, company_id").match(scope).in("company_id", companyIds),
-      db.from("distributors").select("id, company_id").match(scope).in("company_id", companyIds),
+      scope(db.from("products").select("id, company_id"), user).in("company_id", companyIds),
+      scope(db.from("distributors").select("id, company_id"), user).in("company_id", companyIds),
       db.rpc("sales_by_product_distributor_pair", {
         p_user: getUserId(user),
         p_is_admin: isAdmin(user),

@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "./supabaseClient.js";
-import { buildUserFilter, getUserId, isAdmin } from "../utils/ownership.js";
+import { getUserId, isAdmin, scope } from "../utils/ownership.js";
 import { decorateAuditLogs } from "./auditService.js";
 
 function asNumber(value) {
@@ -52,13 +52,12 @@ function mapMissing(doc) {
 
 export async function buildDashboardAnalytics(user) {
   const db = supabaseAdmin();
-  const userFilter = buildUserFilter(user);
   const admin = isAdmin(user);
   const rpcArgs = { p_user: getUserId(user), p_is_admin: admin };
   const auditFilter = admin ? {} : { user_id: text(getUserId(user)) };
 
   const count = async (table) => {
-    const { count: total, error } = await db.from(table).select("id", { count: "exact", head: true }).match(userFilter);
+    const { count: total, error } = await scope(db.from(table).select("id", { count: "exact", head: true }), user);
     if (error) throw new Error(error.message);
     return total || 0;
   };

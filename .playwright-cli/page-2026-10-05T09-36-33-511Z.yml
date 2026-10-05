@@ -1,0 +1,121 @@
+- generic [ref=f4e4]:
+  - generic [ref=f4e7]:
+    - generic [ref=f4e10]:
+      - img "Google" [ref=f4e12]
+      - generic [ref=f4e13]: Sign in with Google
+    - generic [ref=f4e14]:
+      - generic [ref=f4e16]:
+        - heading "Sign in" [level=1] [ref=f4e17]
+        - paragraph [ref=f4e18]:
+          - text: to continue to
+          - button "kooyrttfmmrlprxowszp.supabase.co" [ref=f4e19] [cursor=pointer]
+      - generic [ref=f4e22]:
+        - generic [ref=f4e25]:
+          - generic [ref=f4e30]:
+            - textbox "Email or phone" [active] [ref=f4e31]
+            - generic: Email or phone
+          - paragraph [ref=f4e32]:
+            - link "Forgot email?" [ref=f4e33] [cursor=pointer]:
+              - /url: /signin/v2/usernamerecovery?app_domain=https://kooyrttfmmrlprxowszp.supabase.co&client_id=688795712208-2tq29t98uulldk41jhp7k8n5gfqi8eav.apps.googleusercontent.com&continue=https://accounts.google.com/signin/oauth/legacy/consent?authuser%3Dunknown%26part%3DAJi8hAOPahYit-Y7Ek-LGO6smrx61ucx4hO23xda-sXaMl1_svBgxOzHvFKeqfQx9JSqP-zr2y7heQ73NKk5GvXAmJXGfUQaJ5-NnU-v0GEjxyJO0jWg7oGcpEwznhoVKapY1Dj8gAMrViyfga7yhGV6kVKJJdv77C47FZ2e1Dxu1qpQDNf8QuISscgFG56k-kHywzV9eTapalyxdzEOI5r3O2tAI8BykIvk50QXpRT07ATAoCUvjuGcUMLDgsdILC-apMJtyygHwMoH63do8OSvo4-2xZ43EmCNghNbA-lmZi0X9sf641Z4vvHF1pXujpZu1OfE2KhZ2_SqgalshPjlA5qCQSso_S63i4mOplt6kLuUMTJsmyLtn2ElHFjohMeU7Z0ApU5FEJ-TPgm4rCdFlBI25llfjIGW_sEbtNe1GY5ceYFVLfv60h8MNmNnB0ryNbXapqg-OJ3IhMQTO0m7TZHesvBj1c0ZkAa28o355dX0xLIIWA0%26flowName%3DGeneralOAuthFlow%26as%3DS-953532772%253A1791192991575861%26client_id%3D688795712208-2tq29t98uulldk41jhp7k8n5gfqi8eav.apps.googleusercontent.com%23&dsh=S-953532772:1791192991575861&flowName=GeneralOAuthLite&o2v=2&opparams=%253Fredirect_to%253Dhttp%25253A%25252F%25252Flocalhost%25253A5180%25252Foauth%25252Fcallback&rart=ANgoxce99AFlxoTDAb2WlHtGc7UlyR3B32WxuoL6Z56TUSVZk9dlPN9Y_hJG4hrDQuzCU51N1OQ3r-5993sBwva9g5d5j16HtvCR7HX-WE3auj9iIW823wc&redirect_uri=https://kooyrttfmmrlprxowszp.supabase.co/auth/v1/callback&response_type=code&scope=email+profile&service=lso&state=79c4531d-673a-497a-a424-ed621a14f926
+        - generic [ref=f4e35]:
+          - button "Next" [ref=f4e37]
+          - link "Create account" [ref=f4e39] [cursor=pointer]:
+            - /url: /lifecycle/flows/signup?app_domain=https://kooyrttfmmrlprxowszp.supabase.co&client_id=688795712208-2tq29t98uulldk41jhp7k8n5gfqi8eav.apps.googleusercontent.com&continue=https://accounts.google.com/signin/oauth/legacy/consent?authuser%3Dunknown%26part%3DAJi8hAOPahYit-Y7Ek-LGO6smrx61ucx4hO23xda-sXaMl1_svBgxOzHvFKeqfQx9JSqP-zr2y7heQ73NKk5GvXAmJXGfUQaJ5-NnU-v0GEjxyJO0jWg7oGcpEwznhoVKapY1Dj8gAMrViyfga7yhGV6kVKJJdv77C47FZ2e1Dxu1qpQDNf8QuISscgFG56k-kHywzV9eTapalyxdzEOI5r3O2tAI8BykIvk50QXpRT07ATAoCUvjuGcUMLDgsdILC-apMJtyygHwMoH63do8OSvo4-2xZ43EmCNghNbA-lmZi0X9sf641Z4vvHF1pXujpZu1OfE2KhZ2_SqgalshPjlA5qCQSso_S63i4mOplt6kLuUMTJsmyLtn2ElHFjohMeU7Z0ApU5FEJ-TPgm4rCdFlBI25llfjIGW_sEbtNe1GY5ceYFVLfv60h8MNmNnB0ryNbXapqg-OJ3IhMQTO0m7TZHesvBj1c0ZkAa28o355dX0xLIIWA0%26flowName%3DGeneralOAuthFlow%26as%3DS-953532772%253A1791192991575861%26client_id%3D688795712208-2tq29t98uulldk41jhp7k8n5gfqi8eav.apps.googleusercontent.com%23&dsh=S-953532772:1791192991575861&flowEntry=SignUp&flowName=GlifWebSignIn&o2v=2&opparams=%253Fredirect_to%253Dhttp%25253A%25252F%25252Flocalhost%25253A5180%25252Foauth%25252Fcallback&rart=ANgoxce99AFlxoTDAb2WlHtGc7UlyR3B32WxuoL6Z56TUSVZk9dlPN9Y_hJG4hrDQuzCU51N1OQ3r-5993sBwva9g5d5j16HtvCR7HX-WE3auj9iIW823wc&redirect_uri=https://kooyrttfmmrlprxowszp.supabase.co/auth/v1/callback&response_type=code&scope=email+profile&service=lso&signInUrl=https://accounts.google.com/signin/oauth?app_domain%3Dhttps://kooyrttfmmrlprxowszp.supabase.co%26client_id%3D688795712208-2tq29t98uulldk41jhp7k8n5gfqi8eav.apps.googleusercontent.com%26continue%3Dhttps://accounts.google.com/signin/oauth/legacy/consent?authuser%253Dunknown%2526part%253DAJi8hAOPahYit-Y7Ek-LGO6smrx61ucx4hO23xda-sXaMl1_svBgxOzHvFKeqfQx9JSqP-zr2y7heQ73NKk5GvXAmJXGfUQaJ5-NnU-v0GEjxyJO0jWg7oGcpEwznhoVKapY1Dj8gAMrViyfga7yhGV6kVKJJdv77C47FZ2e1Dxu1qpQDNf8QuISscgFG56k-kHywzV9eTapalyxdzEOI5r3O2tAI8BykIvk50QXpRT07ATAoCUvjuGcUMLDgsdILC-apMJtyygHwMoH63do8OSvo4-2xZ43EmCNghNbA-lmZi0X9sf641Z4vvHF1pXujpZu1OfE2KhZ2_SqgalshPjlA5qCQSso_S63i4mOplt6kLuUMTJsmyLtn2ElHFjohMeU7Z0ApU5FEJ-TPgm4rCdFlBI25llfjIGW_sEbtNe1GY5ceYFVLfv60h8MNmNnB0ryNbXapqg-OJ3IhMQTO0m7TZHesvBj1c0ZkAa28o355dX0xLIIWA0%2526flowName%253DGeneralOAuthFlow%2526as%253DS-953532772%25253A1791192991575861%2526client_id%253D688795712208-2tq29t98uulldk41jhp7k8n5gfqi8eav.apps.googleusercontent.com%2523%26dsh%3DS-953532772:1791192991575861%26flowName%3DGeneralOAuthLite%26o2v%3D2%26opparams%3D%25253Fredirect_to%25253Dhttp%2525253A%2525252F%2525252Flocalhost%2525253A5180%2525252Foauth%2525252Fcallback%26rart%3DANgoxce99AFlxoTDAb2WlHtGc7UlyR3B32WxuoL6Z56TUSVZk9dlPN9Y_hJG4hrDQuzCU51N1OQ3r-5993sBwva9g5d5j16HtvCR7HX-WE3auj9iIW823wc%26redirect_uri%3Dhttps://kooyrttfmmrlprxowszp.supabase.co/auth/v1/callback%26response_type%3Dcode%26scope%3Demail%2Bprofile%26service%3Dlso%26state%3D79c4531d-673a-497a-a424-ed621a14f926&state=79c4531d-673a-497a-a424-ed621a14f926
+  - contentinfo [ref=f4e40]:
+    - combobox [ref=f4e43] [cursor=pointer]:
+      - option "Afrikaans"
+      - option "azərbaycan"
+      - option "bosanski"
+      - option "català"
+      - option "Čeština"
+      - option "Cymraeg"
+      - option "Dansk"
+      - option "Deutsch"
+      - option "eesti"
+      - option "English (United Kingdom)"
+      - option "English (United States)" [selected]
+      - option "Español (España)"
+      - option "Español (Latinoamérica)"
+      - option "euskara"
+      - option "Filipino"
+      - option "Français (Canada)"
+      - option "Français (France)"
+      - option "Gaeilge"
+      - option "galego"
+      - option "Hrvatski"
+      - option "Indonesia"
+      - option "isiZulu"
+      - option "íslenska"
+      - option "Italiano"
+      - option "Kiswahili"
+      - option "latviešu"
+      - option "lietuvių"
+      - option "magyar"
+      - option "Melayu"
+      - option "Nederlands"
+      - option "norsk"
+      - option "o‘zbek"
+      - option "polski"
+      - option "Português (Brasil)"
+      - option "Português (Portugal)"
+      - option "română"
+      - option "shqip"
+      - option "Slovenčina"
+      - option "slovenščina"
+      - option "srpski (latinica)"
+      - option "Suomi"
+      - option "Svenska"
+      - option "Tiếng Việt"
+      - option "Türkçe"
+      - option "Ελληνικά"
+      - option "беларуская"
+      - option "български"
+      - option "кыргызча"
+      - option "қазақ тілі"
+      - option "македонски"
+      - option "монгол"
+      - option "Русский"
+      - option "српски (ћирилица)"
+      - option "Українська"
+      - option "ქართული"
+      - option "հայերեն"
+      - option "‫עברית‬‎"
+      - option "‫اردو‬‎"
+      - option "‫العربية‬‎"
+      - option "‫فارسی‬‎"
+      - option "አማርኛ"
+      - option "नेपाली"
+      - option "मराठी"
+      - option "हिन्दी"
+      - option "অসমীয়া"
+      - option "বাংলা"
+      - option "ਪੰਜਾਬੀ"
+      - option "ગુજરાતી"
+      - option "ଓଡ଼ିଆ"
+      - option "தமிழ்"
+      - option "తెలుగు"
+      - option "ಕನ್ನಡ"
+      - option "മലയാളം"
+      - option "සිංහල"
+      - option "ไทย"
+      - option "ລາວ"
+      - option "မြန်မာ"
+      - option "ខ្មែរ"
+      - option "한국어"
+      - option "中文（香港）"
+      - option "日本語"
+      - option "简体中文"
+      - option "繁體中文"
+    - list [ref=f4e44]:
+      - listitem [ref=f4e45]:
+        - link "Open Google Account Help Center (external, opens in a new window)" [ref=f4e46] [cursor=pointer]:
+          - /url: https://support.google.com/accounts?hl=en-US&p=account_iph
+          - text: Help
+      - listitem [ref=f4e47]:
+        - link "Privacy Policy (external, opens in a new window)" [ref=f4e48] [cursor=pointer]:
+          - /url: https://accounts.google.com/TOS?loc=PK&hl=en-US&privacy=true
+          - text: Privacy
+      - listitem [ref=f4e49]:
+        - link "Google Terms of Service (external, opens in a new window)" [ref=f4e50] [cursor=pointer]:
+          - /url: https://accounts.google.com/TOS?loc=PK&hl=en-US
+          - text: Terms

@@ -19,14 +19,49 @@ export function isAdmin(user) {
 }
 
 /**
- * Build a Supabase filter for the caller: `null` for an admin (no filter =
- * all data), otherwise `{ user_id: <uuid> }` for a regular user.
+ * Build a Supabase filter for the caller: `{}` for an admin (no filter = all
+ * data), otherwise the plain owner filter for a regular user.
+ *
+ * Prefer scope() over using this directly. PostgREST's `or` cannot be
+ * expressed through postgrest-js's .match(): match() turns an array value into
+ * one `eq` per element (AND, not OR), so passing `{ or: [...] }` produces
+ * `or=eq.[object Object],eq.[object Object]` and Postgres answers "failed to
+ * parse logic tree". scope() calls the builder's real .or() instead.
  * @param {Object} user - User object from req.user
- * @returns {{user_id?: string}} filter to apply with `.match()`, or {} for admin
+ * @returns {Object} filter to apply with `.match()`, or {} for admin
  */
 export function buildUserFilter(user) {
   if (!user || isAdmin(user)) return {};
   return { user_id: getUserId(user) };
+}
+
+/**
+ * The PostgREST `or` expression matching "the caller's own rows, plus the
+ * shared ones". A NULL `user_id` means shared: every signed-in user can see it.
+ * That is how the migrated legacy catalogue (530 distributors, 2 companies,
+ * none of which ever recorded an owner) stays visible to a brand-new account
+ * instead of showing an empty workspace. Rows a user creates keep their owner,
+ * so per-tenant isolation is unchanged.
+ * @param {Object} user - User object from req.user
+ * @returns {string} PostgREST or-filter expression
+ */
+export function ownerOrExpression(user) {
+  return `user_id.eq.${getUserId(user)},user_id.is.null`;
+}
+
+/**
+ * Apply caller scoping to a PostgREST query builder.
+ *
+ * Other filters already on the builder are ANDed with this by PostgREST, so
+ * `.eq("year", 2020)` combined with scope() still means "year 2020 AND
+ * (mine OR shared)".
+ * @param {Object} query - A supabase-js PostgrestFilterBuilder
+ * @param {Object} user - User object from req.user
+ * @returns {Object} the same builder, scoped
+ */
+export function scope(query, user) {
+  if (!user || isAdmin(user)) return query;
+  return query.or(ownerOrExpression(user));
 }
 
 /**
@@ -49,16 +84,22 @@ export function getUserId(user) {
 /**
  * Verify ownership of a resource
  * Admin can access everything
- * Regular users can only access their own resources
+ * Regular users can access their own resources, plus any shared (NULL owner) one
  * @param {Object} user - User object from req.user
  * @param {Object} resource - Resource row from the store (camelCase `userId` or raw `user_id`)
- * @returns {Boolean} True if user owns the resource or is admin
+ * @returns {Boolean} True if user owns the resource, is admin, or the resource is shared
  */
 export function verifyOwnership(user, resource) {
   if (isAdmin(user)) return true;
+  if (!resource) return false;
 
-  const owner = resource?.userId ?? resource?.user_id;
-  if (!resource || !owner) return false;
+  const owner = resource.userId ?? resource.user_id;
+  // An explicit NULL owner means the row is shared reference data (see
+  // buildUserFilter). An *absent* field is not the same thing: it means the
+  // owner was never populated, so we cannot tell shared from orphaned and must
+  // not hand out access on a guess.
+  if (owner === null || owner === "") return true;
+  if (owner === undefined) return false;
 
   return String(owner) === String(getUserId(user));
 }

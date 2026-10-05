@@ -1,0 +1,54 @@
+- main [ref=f19e3]:
+  - complementary [ref=f19e4]:
+    - link "SSR Sales Stock Report Sales, Stock & Reporting" [ref=f19e5] [cursor=pointer]:
+      - /url: /
+      - generic [ref=f19e6]: SSR
+      - generic [ref=f19e7]:
+        - strong [ref=f19e8]: Sales Stock Report
+        - generic [ref=f19e9]: Sales, Stock & Reporting
+    - generic [ref=f19e10]:
+      - generic [ref=f19e11]: Distribution operations platform
+      - generic [ref=f19e12]: Close the month on numbers you can defend.
+      - paragraph [ref=f19e13]: Sales, stock, distributor and reporting operations in one dependable workspace.
+    - list [ref=f19e14]:
+      - listitem [ref=f19e15]: Excel SSR processing
+      - listitem [ref=f19e16]: One distributor network
+      - listitem [ref=f19e17]: Reporting you can sign off
+  - generic [ref=f19e18]:
+    - navigation [ref=f19e19]:
+      - link "Home" [ref=f19e20] [cursor=pointer]:
+        - /url: /
+      - link "Create account" [ref=f19e21] [cursor=pointer]:
+        - /url: /signup
+    - generic [ref=f19e22]:
+      - generic [ref=f19e23]:
+        - heading "Welcome back" [level=1] [ref=f19e24]
+        - paragraph [ref=f19e25]: Sign in to continue to your workspace
+      - generic [ref=f19e26]:
+        - generic [ref=f19e27]:
+          - generic [ref=f19e28]: Username
+          - textbox "Username" [active] [ref=f19e30]:
+            - /placeholder: your.username
+        - generic [ref=f19e31]:
+          - generic [ref=f19e32]: Password
+          - generic [ref=f19e33]:
+            - textbox "Password Show password" [ref=f19e34]:
+              - /placeholder: ••••••••
+            - button "Show password" [ref=f19e35] [cursor=pointer]
+        - generic [ref=f19e39]:
+          - generic [ref=f19e40] [cursor=pointer]:
+            - checkbox "Remember me" [checked] [ref=f19e41]
+            - generic [ref=f19e42]: Remember me
+          - link "Forgot password?" [ref=f19e43] [cursor=pointer]:
+            - /url: /forgot-password
+        - button "Sign in" [ref=f19e44] [cursor=pointer]
+        - paragraph [ref=f19e49]:
+          - text: New here?
+          - link "Create an account" [ref=f19e50] [cursor=pointer]:
+            - /url: /signup
+      - generic [ref=f19e51]:
+        - generic [ref=f19e52]: or
+        - button "Sign in with Google" [ref=f19e54] [cursor=pointer]
+    - generic [ref=f19e60]:
+      - generic [ref=f19e61]: Encrypted connection · Audit-logged sessions
+      - generic [ref=f19e65]: © 2026 Sales Stock Report

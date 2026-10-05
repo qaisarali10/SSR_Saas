@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "../services/supabaseClient.js";
 import { buildMonthlySummary } from "../services/summaryService.js";
-import { buildUserFilter, getUserId, isAdmin, verifyOwnership } from "../utils/ownership.js";
+import { getUserId, isAdmin, scope, verifyOwnership } from "../utils/ownership.js";
 
 const DISTRIBUTOR_JOIN = "*, company:companies(*)";
 const PRODUCT_JOIN = "*, company:companies(*)";
@@ -163,9 +163,8 @@ export class SupabaseStore {
   }
 
   async stats(user) {
-    const filter = buildUserFilter(user);
     const count = async (table) => {
-      let query = this.db.from(table).select("id", { count: "exact", head: true }).match(filter);
+      let query = scope(this.db.from(table).select("id", { count: "exact", head: true }), user);
       const { count: total, error } = await query;
       raise(error);
       return total || 0;
@@ -187,7 +186,7 @@ export class SupabaseStore {
   }
 
   async listCompanies(user) {
-    const { data, error } = await this.db.from("companies").select("*").match(buildUserFilter(user)).order("cname");
+    const { data, error } = await scope(this.db.from("companies").select("*"), user).order("cname");
     raise(error);
     return data.map(mapCompany);
   }
@@ -203,7 +202,7 @@ export class SupabaseStore {
   }
 
   async listDistributors(user, { companyId, q, activeOnly = false, limit = 600 } = {}) {
-    let query = this.db.from("distributors").select(DISTRIBUTOR_JOIN).match(buildUserFilter(user));
+    let query = scope(this.db.from("distributors").select(DISTRIBUTOR_JOIN), user);
     if (companyId) query = query.eq("company_id", companyId);
     if (activeOnly) query = query.eq("status", true);
     if (q) query = query.or(`dname.ilike.${contains(q)},area.ilike.${contains(q)}`);
@@ -239,7 +238,7 @@ export class SupabaseStore {
   }
 
   async listProducts(user, { companyId, q, ptype, limit = 600 } = {}) {
-    let query = this.db.from("products").select(PRODUCT_JOIN).match(buildUserFilter(user));
+    let query = scope(this.db.from("products").select(PRODUCT_JOIN), user);
     if (companyId) query = query.eq("company_id", companyId);
     if (ptype) query = query.eq("ptype", ptype);
     if (q) query = query.ilike("pname", contains(q));
@@ -271,7 +270,7 @@ export class SupabaseStore {
   }
 
   async listAliases(user, { productId, q, limit = 600 } = {}) {
-    let query = this.db.from("product_aliases").select(ALIAS_JOIN).match(buildUserFilter(user));
+    let query = scope(this.db.from("product_aliases").select(ALIAS_JOIN), user);
     if (productId) query = query.eq("product_id", productId);
     if (q) query = query.ilike("paname", contains(q));
     const { data, error } = await query.order("paname").limit(Number(limit) || 600);
@@ -283,20 +282,17 @@ export class SupabaseStore {
   // stay -- without it one tenant registering "ABC-500" would block every
   // other tenant from doing the same.
   async aliasExists(user, paname) {
-    const { count, error } = await this.db
-      .from("product_aliases")
-      .select("id", { count: "exact", head: true })
-      .match(buildUserFilter(user))
+    const { count, error } = await scope(
+      this.db.from("product_aliases").select("id", { count: "exact", head: true }),
+      user
+    )
       .ilike("paname", escapeLike(paname));
     raise(error);
     return Boolean(count);
   }
 
   async getAliasByName(user, paname) {
-    const { data, error } = await this.db
-      .from("product_aliases")
-      .select(ALIAS_JOIN)
-      .match(buildUserFilter(user))
+    const { data, error } = await scope(this.db.from("product_aliases").select(ALIAS_JOIN), user)
       .ilike("paname", escapeLike(paname))
       .maybeSingle();
     raise(error);
@@ -314,7 +310,7 @@ export class SupabaseStore {
   }
 
   async listSchemes(user, { productId, q, limit = 700 } = {}) {
-    let query = this.db.from("product_schemes").select(SCHEME_JOIN).match(buildUserFilter(user));
+    let query = scope(this.db.from("product_schemes").select(SCHEME_JOIN), user);
     if (productId) query = query.eq("product_id", productId);
     const { data, error } = await query.order("schemeid", { ascending: false }).limit(Number(limit) || 700);
     raise(error);
@@ -328,10 +324,7 @@ export class SupabaseStore {
   }
 
   async getSchemesForProduct(user, productId) {
-    const { data, error } = await this.db
-      .from("product_schemes")
-      .select(SCHEME_JOIN)
-      .match(buildUserFilter(user))
+    const { data, error } = await scope(this.db.from("product_schemes").select(SCHEME_JOIN), user)
       .eq("product_id", productId)
       .order("schemeid", { ascending: false });
     raise(error);
@@ -385,10 +378,7 @@ export class SupabaseStore {
     start.setDate(start.getDate() - daysBack);
     start.setHours(0, 0, 0, 0);
 
-    const { count, error } = await this.db
-      .from("sales")
-      .select("id", { count: "exact", head: true })
-      .match(buildUserFilter(user))
+    const { count, error } = await scope(this.db.from("sales").select("id", { count: "exact", head: true }), user)
       .eq("distributor_id", distributorId)
       .gte("date", start.toISOString())
       .lte("date", today.toISOString());
@@ -397,10 +387,7 @@ export class SupabaseStore {
   }
 
   async checkDistributorPeriodSales(user, distributorId, month, year) {
-    const { count, error } = await this.db
-      .from("sales")
-      .select("id", { count: "exact", head: true })
-      .match(buildUserFilter(user))
+    const { count, error } = await scope(this.db.from("sales").select("id", { count: "exact", head: true }), user)
       .eq("distributor_id", distributorId)
       .eq("month", month)
       .eq("year", Number(year));
@@ -434,7 +421,7 @@ export class SupabaseStore {
 
   async listSales(user, { month, year, distributorId, limit = 250 } = {}) {
     const parsedLimit = Number(limit) || 250;
-    let query = this.db.from("sales").select(parsedLimit <= 5000 ? SALE_JOIN : "*").match(buildUserFilter(user));
+    let query = scope(this.db.from("sales").select(parsedLimit <= 5000 ? SALE_JOIN : "*"), user);
     if (month) query = query.eq("month", month);
     if (year) query = query.eq("year", Number(year));
     if (distributorId) query = query.eq("distributor_id", distributorId);
@@ -444,7 +431,7 @@ export class SupabaseStore {
   }
 
   async listServices(user, { q, activeOnly = false, limit = 600 } = {}) {
-    let query = this.db.from("services").select("*").match(buildUserFilter(user));
+    let query = scope(this.db.from("services").select("*"), user);
     if (activeOnly) query = query.eq("status", true);
     if (q) query = query.or(`name.ilike.${contains(q)},category.ilike.${contains(q)}`);
     const { data, error } = await query.order("name").limit(Number(limit) || 600);
@@ -470,7 +457,7 @@ export class SupabaseStore {
   }
 
   async monthlySummary(user, { month, year }) {
-    let query = this.db.from("sales").select(SALE_JOIN).match(buildUserFilter(user)).eq("year", Number(year));
+    let query = scope(this.db.from("sales").select(SALE_JOIN), user).eq("year", Number(year));
     if (month !== "all") query = query.eq("month", month);
     const { data, error } = await query;
     raise(error);
@@ -507,7 +494,7 @@ export class SupabaseStore {
   }
 
   async listMissingAliases(user, { sessionKey } = {}) {
-    let query = this.db.from("temp_missing_products").select("*").match(buildUserFilter(user));
+    let query = scope(this.db.from("temp_missing_products").select("*"), user);
     if (sessionKey) query = query.eq("session_key", sessionKey);
     const { data, error } = await query.order("product");
     raise(error);
@@ -544,10 +531,7 @@ export class SupabaseStore {
   }
 
   async listFileActivity(user, { limit = 12 } = {}) {
-    const { data, error } = await this.db
-      .from("upload_logs")
-      .select("*")
-      .match(buildUserFilter(user))
+    const { data, error } = await scope(this.db.from("upload_logs").select("*"), user)
       .order("created_at", { ascending: false })
       .limit(Number(limit) || 12);
     raise(error);

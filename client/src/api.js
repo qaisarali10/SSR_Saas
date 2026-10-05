@@ -148,6 +148,34 @@ const STATUS_MESSAGES = {
   504: "The server took too long to respond. Please try again."
 };
 
+// Renews the session from the long-lived refreshToken cookie. The accessToken
+// cookie is deliberately short-lived (1h), so without this an open tab is
+// signed out for good the moment it expires, even though the server has had a
+// working /auth/refresh endpoint the whole time. Concurrent 401s share one
+// in-flight refresh so a screen that loads seven panels at once does not fire
+// seven of them.
+let refreshPromise = null;
+
+function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = csrfFetch("/api/auth/refresh", { method: "POST" })
+      .then((response) => {
+        // A failed refresh means the session really is gone; let the caller's
+        // original 401 stand rather than reporting a confusing refresh error.
+        if (!response.ok) {
+          clearAuth();
+          return false;
+        }
+        return true;
+      })
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 /**
  * Turn a failed response into something a person can act on. A body that is
  * not JSON means the request died before it reached the API (dev proxy down,
@@ -160,7 +188,7 @@ function describeFailure(status, parsedMessage, bodyWasJson) {
   return STATUS_MESSAGES[status] || "Something went wrong. Please try again.";
 }
 
-async function request(path, options = {}) {
+async function request(path, options = {}, retried = false) {
   let response;
   try {
     response = await csrfFetch(`/api${path}`, options);
@@ -169,6 +197,15 @@ async function request(path, options = {}) {
     error.status = 0;
     error.cause = networkError;
     throw error;
+  }
+
+  // A safe request that comes back 401 is usually just an expired access
+  // token, so renew once and replay it. Only GET/HEAD are retried this way:
+  // replaying a mutation after a 401 risks applying it twice, and a 401 from
+  // one of the credential endpoints is a real answer, not an expired session.
+  const isSafe = ["GET", "HEAD"].includes((options.method || "GET").toUpperCase());
+  if (response.status === 401 && isSafe && !retried && !path.startsWith("/auth/refresh")) {
+    if (await refreshSession()) return request(path, options, true);
   }
 
   if (!response.ok) {

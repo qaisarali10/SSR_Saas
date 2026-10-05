@@ -1,0 +1,59 @@
+- main [ref=f3e3]:
+  - complementary [ref=f3e4]:
+    - link "SSR Sales Stock Report Sales, Stock & Reporting" [ref=f3e5] [cursor=pointer]:
+      - /url: /
+      - generic [ref=f3e6]: SSR
+      - generic [ref=f3e7]:
+        - strong [ref=f3e8]: Sales Stock Report
+        - generic [ref=f3e9]: Sales, Stock & Reporting
+    - generic [ref=f3e10]:
+      - generic [ref=f3e11]: Distribution operations platform
+      - generic [ref=f3e12]: Close the month on numbers you can defend.
+      - paragraph [ref=f3e13]: Sales, stock, distributor and reporting operations in one dependable workspace.
+    - list [ref=f3e14]:
+      - listitem [ref=f3e15]: Excel SSR processing
+      - listitem [ref=f3e16]: One distributor network
+      - listitem [ref=f3e17]: Reporting you can sign off
+  - generic [ref=f3e18]:
+    - navigation [ref=f3e19]:
+      - link "Home" [ref=f3e20] [cursor=pointer]:
+        - /url: /
+      - link "Sign in" [ref=f3e21] [cursor=pointer]:
+        - /url: /login
+    - generic [ref=f3e22]:
+      - generic [ref=f3e23]:
+        - heading "Create account" [level=1] [ref=f3e24]
+        - paragraph [ref=f3e25]: Start a protected workspace
+      - generic [ref=f3e26]:
+        - generic [ref=f3e27]:
+          - generic [ref=f3e28]: Name
+          - textbox "Name" [active] [ref=f3e30]:
+            - /placeholder: Your full name
+        - generic [ref=f3e31]:
+          - generic [ref=f3e32]: Email
+          - textbox "Email" [ref=f3e34]:
+            - /placeholder: you@company.com
+        - generic [ref=f3e35]:
+          - generic [ref=f3e36]: Password
+          - generic [ref=f3e37]:
+            - textbox "Password Show password At least 6 characters." [ref=f3e38]:
+              - /placeholder: ••••••••
+            - button "Show password" [ref=f3e39] [cursor=pointer]
+          - generic [ref=f3e43]: At least 6 characters.
+        - generic [ref=f3e44]:
+          - generic [ref=f3e45]: Confirm password
+          - generic [ref=f3e46]:
+            - textbox "Confirm password Show password" [ref=f3e47]:
+              - /placeholder: ••••••••
+            - button "Show password" [ref=f3e48] [cursor=pointer]
+        - button "Create account" [ref=f3e52] [cursor=pointer]
+        - paragraph [ref=f3e56]:
+          - text: Already have an account?
+          - link "Sign in" [ref=f3e57] [cursor=pointer]:
+            - /url: /login
+      - generic [ref=f3e58]:
+        - generic [ref=f3e59]: or
+        - button "Sign up with Google" [ref=f3e61] [cursor=pointer]
+    - generic [ref=f3e67]:
+      - generic [ref=f3e68]: Encrypted connection · Audit-logged sessions
+      - generic [ref=f3e72]: © 2026 Sales Stock Report
