@@ -27,11 +27,14 @@ A **React + Express + Supabase** application for **Sales, Stock & Reporting (SSR
 
 1. Create a [Supabase](https://supabase.com) project.
 
-2. Run `server/supabase/migrations/0001_init.sql` against it (Supabase dashboard's SQL Editor, or `supabase db push` with the CLI).
+2. Run the migrations against it in order (Supabase dashboard's SQL Editor, or `supabase db push` with the CLI):
+   - `server/supabase/migrations/0001_init.sql` — tables, RLS policies and RPCs.
+   - `server/supabase/migrations/0002_grants.sql` — role privileges. **Required**: without it the server crash-loops on boot with `Supabase connection failed: permission denied for table companies`, and the `SECURITY DEFINER` RPCs stay callable by the public anon key.
 
 3. In the Supabase dashboard:
    - **Authentication > Providers > Email**: enable "Confirm email".
-   - **Authentication > URL Configuration**: set the Site URL to your app's origin (`http://localhost:5180` in development) and add `<origin>/confirm` and `<origin>/reset-password` as redirect URLs.
+   - **Authentication > Providers > Google**: enable it, then paste your Google OAuth Client ID and Client Secret. Add `https://<project-ref>.supabase.co/auth/v1/callback` as an Authorized redirect URI in Google Cloud Console — Supabase performs the token exchange, not your server. Never put the client secret in this repo or in a `VITE_`-prefixed variable.
+   - **Authentication > URL Configuration**: set the Site URL to your app's origin (`http://localhost:5180` in development) and add `<origin>/confirm`, `<origin>/reset-password` and `<origin>/oauth/callback` as redirect URLs.
    - **Authentication > Emails / SMTP Settings**: configure outgoing SMTP for confirmation and password-reset mail (Supabase's built-in mailer is rate-limited and meant for development only).
 
 4. Install dependencies:

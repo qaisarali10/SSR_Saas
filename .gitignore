@@ -11,3 +11,9 @@ server/.data/
 *.db
 coverage/
 .DS_Store
+
+# Google OAuth client downloads from the Cloud Console. These contain a live
+# client secret and belong only in the Supabase dashboard (Authentication >
+# Providers > Google), never in the repo.
+client_secret_*.json
+*_googleusercontent.com.json
